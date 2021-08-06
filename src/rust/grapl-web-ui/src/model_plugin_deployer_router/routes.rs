@@ -1,9 +1,11 @@
 use ::reqwest;
+
 use actix_web::{
     post,
     HttpResponse,
     Responder,
 };
+
 use serde::{
     Deserialize,
     Serialize,
@@ -76,6 +78,7 @@ pub async fn delete_plugin(body: actix_web::web::Json<DeployRequest>) -> impl Re
         Err(PluginError::RequestError(_)) => HttpResponse::InternalServerError().finish(),
     }
 }
+
 // actix procedural macros that route incoming http requests
 #[post("/modelPluginDeployer/listPlugins")]
 pub async fn list_plugin() -> impl Responder {
