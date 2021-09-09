@@ -117,6 +117,10 @@ pub fn dead_letter_queue_url() -> String {
     std::env::var("DEAD_LETTER_QUEUE_URL").expect("DEAD_LETTER_QUEUE_URL")
 }
 
+pub fn kafka_endpoint() -> String {
+    std::env::var("KAFKA_ENDPOINT").expect("KAFKA_ENDPOINT")
+}
+
 pub fn mg_alphas() -> Vec<String> {
     return std::env::var("MG_ALPHAS")
         .expect("MG_ALPHAS")
