@@ -18,6 +18,7 @@ from infra.cache import Cache
 from infra.config import (
     DEPLOYMENT_NAME,
     GRAPL_TEST_USER_NAME,
+    KAFKA_BROKER_PORT,
     LOCAL_GRAPL,
     REAL_DEPLOYMENT,
     SHOULD_DEPLOY_INTEGRATION_TESTS,
@@ -168,6 +169,7 @@ def main() -> None:
                 "aws_endpoint": "USE_LOCALSTACK_SENTINEL_VALUE",
                 "deployment_name": DEPLOYMENT_NAME,
                 "grapl_test_user_name": GRAPL_TEST_USER_NAME,
+                "kafka_broker_port": KAFKA_BROKER_PORT,
                 "aws_region": aws.get_region().name,
                 "redis_endpoint": "USE_REDIS_SENTINEL_VALUE",
                 # TODO: consider replacing with the previous per-service `configurable_envvars`
@@ -194,6 +196,8 @@ def main() -> None:
                         "aws_access_key_id",
                         "aws_access_key_secret",
                         "aws_endpoint",
+                        "grapl_test_user_name",
+                        "kafka_broker_port",
                         "redis_endpoint",
                     }
                 }

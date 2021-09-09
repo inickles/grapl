@@ -34,6 +34,17 @@ variable "aws_endpoint" {
   description = "The endpoint in which we can expect to find and interact with AWS."
 }
 
+variable "grapl_test_user_name" {
+  type        = string
+  description = "The name of the test user"
+  default     = "grapl-test-user"
+}
+
+variable "kafka_broker_port" {
+  type        = string
+  description = "Kafka Broker's port to listen on, for other Nomad clients"
+}
+
 variable "redis_endpoint" {
   type        = string
   description = "Where can services find redis?"
@@ -41,8 +52,13 @@ variable "redis_endpoint" {
 
 locals {
   log_level            = "DEBUG"
+  # This is the equivalent of `localhost` within a bridge network.
+  # Useful for, for instance, talking to Zookeeper from Kafka without Consul Connect
+  localhost_within_bridge = attr.unique.network.ip-address
+
   local_aws_endpoint   = "http://${attr.unique.network.ip-address}:4566"
   local_redis_endpoint = "redis://${attr.unique.network.ip-address}:6379"
+  local_kafka_endpoint = "${local.localhost_within_bridge}:${var.kafka_broker_port}"
 
   redis_trimmed = trimprefix(local.local_redis_endpoint, "redis://")
   redis         = split(":", local.redis_trimmed)
@@ -98,10 +114,11 @@ job "integration-tests" {
       env {
         AWS_REGION                  = var.aws_region
         DEPLOYMENT_NAME             = var.deployment_name
-        GRAPL_AWS_ENDPOINT          = var.aws_endpoint
+        GRAPL_AWS_ENDPOINT          = local.aws_endpoint
         GRAPL_AWS_ACCESS_KEY_ID     = var.aws_access_key_id
         GRAPL_AWS_ACCESS_KEY_SECRET = var.aws_access_key_secret
         GRAPL_LOG_LEVEL             = local.log_level
+        KAFKA_ENDPOINT              = local.local_kafka_endpoint
         # This is a hack, because IDK how to share locals across files
         #MG_ALPHAS                   = local.alpha_grpc_connect_str # TODO: Figure out how to do this
         MG_ALPHAS      = "localhost:9080"
@@ -195,7 +212,7 @@ job "integration-tests" {
       env {
         # aws vars
         AWS_REGION                  = var.aws_region
-        GRAPL_AWS_ENDPOINT          = var.aws_endpoint
+        GRAPL_AWS_ENDPOINT          = local.aws_endpoint
         GRAPL_AWS_ACCESS_KEY_ID     = var.aws_access_key_id
         GRAPL_AWS_ACCESS_KEY_SECRET = var.aws_access_key_secret
 
@@ -257,7 +274,7 @@ job "integration-tests" {
       env {
         # aws vars
         AWS_REGION                  = var.aws_region
-        GRAPL_AWS_ENDPOINT          = var.aws_endpoint
+        GRAPL_AWS_ENDPOINT          = local.aws_endpoint
         GRAPL_AWS_ACCESS_KEY_ID     = var.aws_access_key_id
         GRAPL_AWS_ACCESS_KEY_SECRET = var.aws_access_key_secret
 
@@ -265,9 +282,9 @@ job "integration-tests" {
         GRAPL_LOG_LEVEL = local.log_level
 
         # These are placeholders since Ian is replacing the nginx service shortly
-        GRAPL_API_HOST           = "localhost"
+        GRAPL_API_HOST           = "host.docker.internal"
         GRAPL_HTTP_FRONTEND_PORT = 3128
-        GRAPL_TEST_USER_NAME     = ""
+        GRAPL_TEST_USER_NAME     = var.grapl_test_user_name
 
         IS_LOCAL  = true
         MG_ALPHAS = "localhost:9080"
@@ -321,9 +338,9 @@ job "integration-tests" {
         GRAPL_LOG_LEVEL = local.log_level
 
         # These are placeholders since Ian is replacing the nginx service shortly
-        GRAPL_API_HOST           = "localhost"
+        GRAPL_API_HOST           = "host.docker.internal"
         GRAPL_HTTP_FRONTEND_PORT = 3128
-        GRAPL_TEST_USER_NAME     = ""
+        GRAPL_TEST_USER_NAME     = var.grapl_test_user_name
 
         IS_LOCAL  = true
         MG_ALPHAS = "localhost:9080"

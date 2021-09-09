@@ -37,6 +37,7 @@ SHOULD_DEPLOY_INTEGRATION_TESTS = to_bool(
     os.getenv("SHOULD_DEPLOY_INTEGRATION_TESTS", False)
 )
 
+KAFKA_BROKER_PORT = os.getenv("KAFKA_BROKER_PORT", 19092)
 
 def repository_path(relative_path: str) -> Path:
     """
