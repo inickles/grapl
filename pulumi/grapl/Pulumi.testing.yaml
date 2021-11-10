@@ -1,6 +1,9 @@
 config:
   aws:region: us-east-1
   grapl:GRAPL_OPERATIONAL_ALARMS_EMAIL: operational-alarms@graplsecurity.com
+  # For local dev, add container-registry and container-repo to your stack with them set to empty strings
+  grapl:container-registry: "docker.cloudsmith.io/"
+  grapl:container-repo: "raw/"
   grapl:env_vars:
     analyzer-dispatcher:
       RUST_BACKTRACE: "1"

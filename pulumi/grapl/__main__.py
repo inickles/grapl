@@ -281,8 +281,8 @@ def main() -> None:
             # The vars with a leading underscore indicate that the hcl local version of the variable should be used
             # instead of the var version.
             _redis_endpoint=cache.endpoint,
-            container_registry="docker.cloudsmith.io/",
-            container_repo="raw/",
+            container_registry=pulumi_config.require_object("container-registry"),
+            container_repo=pulumi_config.require_object("container-repo"),
             # TODO: consider replacing with the previous per-service `configurable_envvars`
             rust_log="DEBUG",
             # Build Tags. We use per service tags so we can update services independently
@@ -318,8 +318,8 @@ def main() -> None:
             dict(
                 # The vars with a leading underscore indicate that the hcl local version of the variable should be used
                 # instead of the var version.
-                container_registry="docker.cloudsmith.io/",
-                container_repo="raw/",
+                container_registry=pulumi_config.require_object("container-registry"),
+                container_repo=pulumi_config.require_object("container-repo"),
                 # TODO: consider replacing with the previous per-service `configurable_envvars`
                 rust_log="DEBUG",
                 provisioner_tag=artifacts["provisioner"],

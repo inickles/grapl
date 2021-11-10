@@ -89,6 +89,10 @@ pulumi config set aws:region us-east-1
 # You likely want to remove non-required artifacts from your stackfile now
 vim "Pulumi.${STACK_NAME}.yaml"
 
+# Add in pointer to container repos
+pulumi config set grapl:container-registry ""
+pulumi config set grapl:container-repo ""
+
 # Fill in some stack values from Pulumi stacks you set up in `platform-infrastructure`
 pulumi config set grapl:nomad-server-stack "grapl/nomad/$NOMAD_STACK_NAME"
 pulumi config set grapl:networking-stack "grapl/networking/$NETWORKING_STACK_NAME"
