@@ -91,7 +91,7 @@ install_pulumi() {
 
 install_utilities() {
     echo "Install useful utilities"
-    sudo apt-get install -y jq dnsutils
+    sudo apt-get install -y jq dnsutils uuid-runtime
 }
 
 install_hashicorp_tools() {
