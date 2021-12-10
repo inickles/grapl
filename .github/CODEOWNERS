@@ -56,11 +56,14 @@ BUILD @christophermaier
 /src/python/python-proto/ @grapl-security/wg-data-infra
 /src/rust/analyzer-dispatcher/ @grapl-security/wg-data-infra
 /src/rust/bin/ @christophermaier
+/src/rust/build-env.Dockerfile @inickles-grapl
 /src/rust/.cargo @christophermaier
 /src/rust/.cargo/audit.toml @colin-grapl @inickles-grapl
 /src/rust/Cargo.lock @christophermaier
 /src/rust/Cargo.toml @christophermaier
 /src/rust/derive-dynamic-node/ @colin-grapl
+/src/rust/dist.Dockerfile @inickles-grapl
+/src/rust/docker-back.hcl @inickles-grapl
 /src/rust/endpoint-plugin/ @inickles-grapl
 /src/rust/generators/ @inickles-grapl
 /src/rust/graph-merger/ @grapl-security/wg-data-infra
@@ -71,7 +74,9 @@ BUILD @christophermaier
 /src/rust/grapl-service/ @inickles-grapl
 /src/rust/grapl-utils/ @inickles-grapl
 /src/rust/grapl-web-ui/ @inickles-grapl
+/src/rust/integration-tests.Dockerfile @inickles-grapl
 /src/rust/kafka-metrics-exporter/ @jgrillo-grapl
+/src/rust/Makefile @inickles-grapl
 /src/rust/model-plugin-deployer/ @wimax-grapl
 /src/rust/plugin-registry/ @colin-grapl
 /src/rust/plugin-work-queue/ @colin-grapl

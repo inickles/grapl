@@ -71,41 +71,6 @@ so it should be suitable secrets like S3 credentials for use with sccache.
 to the `docker buildx build` commands by setting this option (ex: `--progress
 plain`).
 
-### sccache
-
-By default, our builds use Mozilla's
-[sccache](https://github.com/mozilla/sccache) to cache builds in a [cache mount
-type](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/syntax.md#run---mounttypecache).
-This improves performance for local development experience as Rust sources
-change. 
-
-Environment variables used by `sccache` can be supplied via the
-`GRAPL_RUST_ENV_FILE` environment variable when running Make. 
-
-Examples:
-
-- To disable `sccache` you can do the following:
-
-```
-$ echo "unset RUSTC_WRAPPER" > .rust_env.sh
-$ export GRAPL_RUST_ENV_FILE=.rust_env.sh
-$ make build
-```
-
-- To configure `sccache` to use S3 on a local minio server running on 172.17.0.100:8000:
-
-```
-$ cat <<EOF > .rust_env.sh
-export SCCACHE_BUCKET=sccache
-export AWS_ACCESS_KEY_ID=AKIAEXAMPLE
-export AWS_SECRET_ACCESS_KEY="d2hhdCBkaWQgeW91IGV4cGVjdCB0byBmaW5kPwo="
-export SCCACHE_DIR=/root/sccache
-export SCCACHE_ENDPOINT="172.17.0.100:8000"
-EOF
-$ export GRAPL_RUST_ENV_FILE=.rust_env.sh
-$ make build
-```
-
 ## How it works
 
 ### Overview

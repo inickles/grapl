@@ -6,22 +6,17 @@
 
 -include .env
 TAG ?= dev
-RUST_BUILD ?= debug
 UID = $(shell id -u)
 GID = $(shell id -g)
 PWD = $(shell pwd)
 GRAPL_ROOT = ${PWD}
 COMPOSE_USER=${UID}:${GID}
 DOCKER_BUILDX_BAKE_OPTS ?=
-ifneq ($(GRAPL_RUST_ENV_FILE),)
-DOCKER_BUILDX_BAKE_OPTS += --set *.secrets=id=rust_env,src="$(GRAPL_RUST_ENV_FILE)"
-endif
 COMPOSE_IGNORE_ORPHANS=1
 COMPOSE_PROJECT_NAME ?= grapl
 export
 
 export EVERY_COMPOSE_FILE=--file docker-compose.yml \
-	--file ./test/docker-compose.unit-tests-rust.yml \
 	--file ./test/docker-compose.unit-tests-js.yml \
 	--file ./test/docker-compose.integration-tests.build.yml
 
@@ -106,7 +101,7 @@ help: ## Print this help
 	@printf -- '             (≡)      /____/             /_/            \n'
 	@printf -- '\n'
 	@printf -- '${FMT_BOLD}Useful environment variables (with examples):${FMT_END}\n'
-	@printf -- '  ${FMT_PURPLE}TARGETS${FMT_END}="typecheck-analyzer-executor typecheck-grapl-common" make typecheck\n'
+	@printf -- '  ${FMT_PURPLE}TARGETS${FMT_END}="typecheck-analyzer-executor typecheck-grapl-common" make test-typecheck\n'
 	@printf -- '    to only run a subset of test targets.\n'
 	@printf -- '\n'
 	@printf -- '  ${FMT_PURPLE}KEEP_TEST_ENV=1${FMT_END} make test-integration\n'
@@ -137,24 +132,22 @@ build-service-pexs:
 .PHONY: build-test-unit
 build-test-unit:
 	$(DOCKER_BUILDX_BAKE) \
-		--file ./test/docker-compose.unit-tests-rust.yml \
 		--file ./test/docker-compose.unit-tests-js.yml
-
-.PHONY: build-test-unit-rust
-build-test-unit-rust:
-	$(DOCKER_BUILDX_BAKE) \
-		--file ./test/docker-compose.unit-tests-rust.yml
 
 .PHONY: build-test-unit-js
 build-test-unit-js:
 	$(DOCKER_BUILDX_BAKE) \
 		--file ./test/docker-compose.unit-tests-js.yml
 
+.PHONY: build-test-integration-rust
+build-test-integration-rust:
+	$(MAKE) -C src/rust build-integration-test-image
+
 .PHONY: build-test-integration
-build-test-integration: build
+build-test-integration: build build-test-integration-rust
 	$(DOCKER_BUILDX_BAKE) \
 		--file ./test/docker-compose.integration-tests.build.yml \
-		python-integration-tests rust-integration-tests
+		python-integration-tests
 
 .PHONY: build-test-e2e
 build-test-e2e: build
@@ -193,11 +186,9 @@ grapl-template-generator: ## Build the Grapl Template Generator and install it t
 		./bin/grapl-template-generator
 	printf -- '\n${FMT_BOLD}Template Generator${FMT_END} written to ${FMT_BLUE}./bin/grapl-template-generator${FMT_END}\n'
 
-.PHONY: dump-artifacts-local
-dump-artifacts-local:  # Run the script that dumps Nomad/Docker logs after test runs
-	./pants run ./etc/ci_scripts/dump_artifacts -- \
-		--compose-project="${COMPOSE_PROJECT_NAME}" \
-		--dump-agent-logs
+.PHONY: dump-artifacts
+dump-artifacts:  # Run the script that dumps Nomad/Docker logs after test runs
+	./pants run ./etc/ci_scripts/dump_artifacts --run-args="--compose-project=${COMPOSE_PROJECT_NAME}"
 
 .PHONY: build-ux
 build-ux: ## Build website assets
@@ -210,15 +201,13 @@ build-ux: ## Build website assets
 
 .PHONY: test-unit
 test-unit: export COMPOSE_PROJECT_NAME := grapl-test-unit
-test-unit: export COMPOSE_FILE := ./test/docker-compose.unit-tests-rust.yml:./test/docker-compose.unit-tests-js.yml
-test-unit: build-test-unit test-unit-python test-unit-shell ## Build and run unit tests
+test-unit: export COMPOSE_FILE := ./test/docker-compose.unit-tests-js.yml
+test-unit: build-test-unit test-unit-rust test-unit-python test-unit-shell ## Build and run unit tests
 	test/docker-compose-with-error.sh
 
 .PHONY: test-unit-rust
-test-unit-rust: export COMPOSE_PROJECT_NAME := grapl-test-unit-rust
-test-unit-rust: export COMPOSE_FILE := ./test/docker-compose.unit-tests-rust.yml
-test-unit-rust: build-test-unit-rust ## Build and run unit tests - Rust only
-	test/docker-compose-with-error.sh
+test-unit-rust: ## Build and run unit tests - Rust only
+	$(MAKE) -C src/rust test
 
 .PHONY: test-unit-python
 # Long term, it would be nice to organize the tests with Pants
@@ -244,8 +233,8 @@ test-unit-js: export COMPOSE_FILE := ./test/docker-compose.unit-tests-js.yml
 test-unit-js: build-test-unit-js test-unit-engagement-view ## Build and run unit tests - JavaScript only
 	test/docker-compose-with-error.sh
 
-.PHONY: typecheck
-typecheck: ## Typecheck Python Code
+.PHONY: test-typecheck
+test-typecheck: ## Typecheck Python Code
 	./pants check ::
 
 .PHONY: test-integration
@@ -279,7 +268,7 @@ test-with-env: # (Do not include help text - not to be used directly)
 		fi
 		# Unset COMPOSE_FILE to help ensure it will be ignored with use of --file
 		unset COMPOSE_FILE
-		$(MAKE) dump-artifacts-local
+		$(MAKE) dump-artifacts
 		$(MAKE) down
 	}
 	# Ensure we call stop even after test failure, and return exit code from
@@ -300,7 +289,7 @@ lint-docker: ## Lint Dockerfiles with Hadolint
 
 .PHONY: lint-rust
 lint-rust: ## Run Rust lint checks
-	cd src/rust; bin/format --check; bin/lint
+	$(MAKE) -C src/rust lint
 
 .PHONY: lint-python
 lint-python: ## Run Python lint checks
@@ -338,7 +327,7 @@ lint: lint-docker lint-python lint-prettier lint-rust lint-shell lint-hcl lint-p
 
 .PHONY: format-rust
 format-rust: ## Reformat all Rust code
-	cd src/rust; bin/format --update
+	$(MAKE) -C src/rust format
 
 .PHONY: format-python
 format-python: ## Reformat all Python code
@@ -359,12 +348,8 @@ format-prettier: build-formatter ## Reformat js/ts/yaml
 format-hcl: ## Reformat all HCLs
 	${NONROOT_DOCKER_COMPOSE_CHECK} hcl-format
 
-.PHONY: format-build
-format-build: ## Reformat BUILD files
-	./pants update-build-files --no-update-build-files-fix-safe-deprecations
-
-.PHONY: format ## Reformat all code
-format: format-python format-shell format-prettier format-rust format-hcl format-build
+.PHONY: format
+format: format-python format-shell format-prettier format-rust format-hcl ## Reformat all code
 
 ##@ Local Grapl 💻
 
